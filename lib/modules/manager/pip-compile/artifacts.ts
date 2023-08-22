@@ -17,6 +17,7 @@ import type {
   UpdateArtifact,
   UpdateArtifactsConfig,
   UpdateArtifactsResult,
+  Upgrade,
 } from '../types';
 
 function getPythonConstraint(
@@ -58,7 +59,8 @@ const allowedPipArguments = [
 export function constructPipCompileCmd(
   content: string,
   inputFileName: string,
-  outputFileName: string
+  outputFileName: string,
+  updatedDeps: Upgrade[]
 ): string {
   const headers = constraintLineRegex.exec(content);
   const args = ['pip-compile'];
@@ -94,6 +96,10 @@ export function constructPipCompileCmd(
   }
   args.push(upath.parse(inputFileName).base);
 
+  for (const dep of updatedDeps) {
+    args.push(`--upgrade-package=${dep.packageName}==${dep.newVersion}`);
+  }
+
   return args.map((argument) => quote(argument)).join(' ');
 }
 
@@ -101,6 +107,7 @@ export async function updateArtifacts({
   packageFileName: inputFileName,
   newPackageFileContent: newInputContent,
   config,
+  updatedDeps
 }: UpdateArtifact): Promise<UpdateArtifactsResult[] | null> {
   const outputFileName = inputFileName.replace(regEx(/(\.in)?$/), '.txt');
   logger.debug(
@@ -119,7 +126,8 @@ export async function updateArtifacts({
     const cmd = constructPipCompileCmd(
       existingOutput,
       inputFileName,
-      outputFileName
+      outputFileName,
+      updatedDeps
     );
     const constraint = getPythonConstraint(config);
     const pipToolsConstraint = getPipToolsConstraint(config);

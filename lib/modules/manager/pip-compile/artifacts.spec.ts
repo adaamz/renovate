@@ -278,7 +278,8 @@ describe('modules/manager/pip-compile/artifacts', () => {
         constructPipCompileCmd(
           Fixtures.get('requirementsNoHeaders.txt'),
           'subdir/requirements.in',
-          'subdir/requirements.txt'
+          'subdir/requirements.txt',
+          []
         )
       ).toBe('pip-compile requirements.in');
     });
@@ -288,7 +289,8 @@ describe('modules/manager/pip-compile/artifacts', () => {
         constructPipCompileCmd(
           Fixtures.get('requirementsWithHashes.txt'),
           'subdir/requirements.in',
-          'subdir/requirements.txt'
+          'subdir/requirements.txt',
+          []
         )
       ).toBe(
         'pip-compile --allow-unsafe --generate-hashes --no-emit-index-url --strip-extras --resolver=backtracking --output-file=requirements.txt requirements.in'
@@ -300,7 +302,8 @@ describe('modules/manager/pip-compile/artifacts', () => {
         constructPipCompileCmd(
           Fixtures.get('requirementsWithUnknownArguments.txt'),
           'subdir/requirements.in',
-          'subdir/requirements.txt'
+          'subdir/requirements.txt',
+          []
         )
       ).toBe('pip-compile --generate-hashes requirements.in');
       expect(logger.trace).toHaveBeenCalledWith(
@@ -318,7 +321,8 @@ describe('modules/manager/pip-compile/artifacts', () => {
         constructPipCompileCmd(
           Fixtures.get('requirementsWithExploitingArguments.txt'),
           'subdir/requirements.in',
-          'subdir/requirements.txt'
+          'subdir/requirements.txt',
+          []
         )
       ).toBe(
         'pip-compile --generate-hashes --output-file=requirements.txt requirements.in'
@@ -327,6 +331,17 @@ describe('modules/manager/pip-compile/artifacts', () => {
         { argument: '--output-file=/etc/shadow' },
         'pip-compile was previously executed with an unexpected `--output-file` filename'
       );
+    });
+
+    it('adds --upgrade-package args', () => {
+      expect(
+        constructPipCompileCmd(
+          Fixtures.get('requirements1.txt'),
+          'requirements1.in',
+          'requirements1.txt',
+          [{"packageName": "sqlalchemy", "newVersion": "1.4.35"}]
+        )
+      ).toBe('pip-compile requirements1.in --upgrade-package=sqlalchemy==1.4.35');
     });
   });
 
